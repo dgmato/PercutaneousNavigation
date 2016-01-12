@@ -1,0 +1,57 @@
+<PlusConfiguration version="2.3">
+
+  <DataCollection StartupDelaySec="1.0" >
+    <DeviceSet 
+      Name="Neuroestimulacion de Raices Sacras: Ascension3DGm"
+      Description="Ascension3DG sensors should be plugged in to the Ascension3DG DriveBay mounted on Ultrasonix US in the following order from to leftmost slot (Transducer 1) to the right: 1 Patient, 2 Needle, 3 Pointer." />
+    <Device
+      Id="TrackerDevice"
+      Type="Ascension3DGm"
+      LocalTimeOffsetSec="0.18"
+      FilterAcWideNotch="1"
+      ToolReferenceFrame="Tracker">
+      <DataSources>
+        <DataSource Type="Tool" Id="Patient" PortName="0" BufferSize="500"  AveragedItemsForFiltering="20"/>
+		    <DataSource Type="Tool" Id="Needle" PortName="1" BufferSize="500"  AveragedItemsForFiltering="20"/>
+		    <DataSource Type="Tool" Id="Pointer" PortName="2" BufferSize="500"  AveragedItemsForFiltering="20"/>
+      </DataSources>
+      <OutputChannels>
+        <OutputChannel Id="TrackerStream">
+          <DataSource Id="Patient" />
+          <DataSource Id="Needle" />
+          <DataSource Id="Pointer" />
+        </OutputChannel>
+      </OutputChannels>
+    </Device>
+  </DataCollection>
+
+  <PlusOpenIGTLinkServer
+    MaxNumberOfIgtlMessagesToSend="10"
+    MaxTimeSpentWithProcessingMs="50"
+    ListeningPort="18944"
+    SendValidTransformsOnly="true"
+    OutputChannelId="TrackerStream" >
+    <DefaultClientInfo>
+      <MessageTypes>
+        <Message Type="TRANSFORM" />
+      </MessageTypes>
+      <TransformNames>
+        <Transform Name="PatientToReference" />
+        <Transform Name="ReferenceToPatient" />
+		    <Transform Name="NeedleToReference" />
+		    <Transform Name="PointerToReference" />
+      </TransformNames>
+      
+    </DefaultClientInfo>
+  </PlusOpenIGTLinkServer>
+
+  <CoordinateDefinitions>
+  
+	  <Transform From="Tracker" To="Reference"
+      Matrix="
+	    1 0 0 0
+	    0 1 0 0
+	    0 0 1 0
+	    0 0 0 1" />
+  </CoordinateDefinitions> 
+</PlusConfiguration>
