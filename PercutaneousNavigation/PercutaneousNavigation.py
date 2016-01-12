@@ -1,4 +1,4 @@
-import os
+mport os
 import unittest
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
@@ -19,7 +19,7 @@ class PercutaneousNavigation(ScriptedLoadableModule):
     self.parent.title = "PercutaneousNavigation" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Examples"]
     self.parent.dependencies = []
-    self.parent.contributors = ["D. Garcia-Mato (Laboratorio de Imagen Medica, Madrid, Spain)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["D. Garcia-Mato (Laboratorio de Imagen Medica, Madrid, Spain)"] 
     self.parent.helpText = """
     This is an example of scripted loadable module bundled in an extension.
     It performs a simple thresholding on the input volume and optionally captures a screenshot.
@@ -27,7 +27,7 @@ class PercutaneousNavigation(ScriptedLoadableModule):
     self.parent.acknowledgementText = """
     This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
     and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
-    """ # replace with organization, grant and thanks.
+""" # replace with organization, grant and thanks.
 
 #
 # PercutaneousNavigationWidget
@@ -53,43 +53,24 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout = qt.QFormLayout(transformsCollapsibleButton)
     
     # ReferenceToTracker transform selector
-    self.referenceToTrackerSelector = slicer.qMRMLNodeComboBox()
-    self.referenceToTrackerSelector.nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    self.referenceToTrackerSelector.selectNodeUponCreation = True
-    self.referenceToTrackerSelector.addEnabled = False
-    self.referenceToTrackerSelector.removeEnabled = False
-    self.referenceToTrackerSelector.noneEnabled = False
-    self.referenceToTrackerSelector.showHidden = False
-    self.referenceToTrackerSelector.showChildNodeTypes = False
-    self.referenceToTrackerSelector.setMRMLScene( slicer.mrmlScene )
-    self.referenceToTrackerSelector.setToolTip( "Pick the ReferenceToTracker transform." )
-    parametersFormLayout.addRow("ReferenceToTracker transform: ", self.referenceToTrackerSelector)
+    self.referenceToTrackerTransform = slicer.util.getNode('ReferenceToTracker')
+    if not self.referenceToTrackerTransform:
+        print('ERROR: ReferenceToTracker transform node was not found')
     
     # TrackerToReference transform selector
-    self.trackerToReferenceSelector = slicer.qMRMLNodeComboBox()
-    self.trackerToReferenceSelector.nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    self.trackerToReferenceSelector.selectNodeUponCreation = True
-    self.trackerToReferenceSelector.addEnabled = False
-    self.trackerToReferenceSelector.removeEnabled = False
-    self.trackerToReferenceSelector.noneEnabled = False
-    self.trackerToReferenceSelector.showHidden = False
-    self.trackerToReferenceSelector.showChildNodeTypes = False
-    self.trackerToReferenceSelector.setMRMLScene( slicer.mrmlScene )
-    self.trackerToReferenceSelector.setToolTip( "Pick the TrackerToReference transform." )
-    parametersFormLayout.addRow("TrackerToReference transform: ", self.trackerToReferenceSelector)
+    self.trackerToReferenceTransform = slicer.util.getNode('TrackerToReference')
+    if not self.trackerToReferenceTransform:
+        print('ERROR: TrackerToReference transform node was not found')
 
     # PointerToTracker transform selector
-    self.pointerToTrackerSelector = slicer.qMRMLNodeComboBox()
-    self.pointerToTrackerSelector.nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    self.pointerToTrackerSelector.selectNodeUponCreation = True
-    self.pointerToTrackerSelector.addEnabled = False
-    self.pointerToTrackerSelector.removeEnabled = False
-    self.pointerToTrackerSelector.noneEnabled = False
-    self.pointerToTrackerSelector.showHidden = False
-    self.pointerToTrackerSelector.showChildNodeTypes = False
-    self.pointerToTrackerSelector.setMRMLScene( slicer.mrmlScene )
-    self.pointerToTrackerSelector.setToolTip( "Pick the PointerToTracker transform." )
-    parametersFormLayout.addRow("PointerToTracker transform: ", self.pointerToTrackerSelector)
+    self.pointerToTrackerTransform = slicer.util.getNode('PointerToTracker')
+    if not self.pointerToTrackerTransform:
+        print('ERROR: PointerToTracker transform node was not found')
+
+    # NeedleToTracker transform selector
+    self.needleToTrackerTransform = slicer.util.getNode('NeedleToTracker')
+    if not self.needleToTrackerTransform:
+        print('ERROR: NeedleToTracker transform node was not found')
 
     # PointerTipToPointer transform selector
     self.pointerTipToPointerSelector = slicer.qMRMLNodeComboBox()
@@ -103,20 +84,7 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     self.pointerTipToPointerSelector.setMRMLScene( slicer.mrmlScene )
     self.pointerTipToPointerSelector.setToolTip( "Pick the PointerTipToPointer transform." )
     parametersFormLayout.addRow("PointerTipToPointer transform: ", self.pointerTipToPointerSelector)
-
-    # NeedleToTracker transform selector
-    self.needleToTrackerSelector = slicer.qMRMLNodeComboBox()
-    self.needleToTrackerSelector.nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    self.needleToTrackerSelector.selectNodeUponCreation = True
-    self.needleToTrackerSelector.addEnabled = False
-    self.needleToTrackerSelector.removeEnabled = False
-    self.needleToTrackerSelector.noneEnabled = False
-    self.needleToTrackerSelector.showHidden = False
-    self.needleToTrackerSelector.showChildNodeTypes = False
-    self.needleToTrackerSelector.setMRMLScene( slicer.mrmlScene )
-    self.needleToTrackerSelector.setToolTip( "Pick the NeedleToTracker transform." )
-    parametersFormLayout.addRow("NeedleToTracker transform: ", self.needleToTrackerSelector)
-
+ 
     # NeedleTipToNeedle transform selector
     self.needleTipToNeedleSelector = slicer.qMRMLNodeComboBox()
     self.needleTipToNeedleSelector.nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
@@ -199,17 +167,23 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     self.needleViewpointButton.toolTip = "Apply needle viewpoint."
     self.needleViewpointButton.enabled = True
     self.enableNeedleViewpointButtonState = 0
-    self.enableNeedleViewpointButtonTextState0 = "Enable Viewpoint Mode"
-    self.enableNeedleViewpointButtonTextState1 = "Disable Viewpoint Mode"
+    self.enableNeedleViewpointButtonTextState0 = "Enable Needle Viewpoint"
+    self.enableNeedleViewpointButtonTextState1 = "Disable Needle Viewpoint"
     self.needleViewpointButton.setText(self.enableNeedleViewpointButtonTextState0)
     parametersFormLayout.addRow(self.needleViewpointButton)
 
+    # Pointer Viewpoint Button
+    self.pointerViewpointButton = qt.QPushButton()
+    self.pointerViewpointButton.toolTip = "Apply pointer viewpoint."
+    self.pointerViewpointButton.enabled = True
+    self.enablePointerViewpointButtonState = 0
+    self.enablePointerViewpointButtonTextState0 = "Enable Pointer Viewpoint"
+    self.enablePointerViewpointButtonTextState1 = "Disable Pointer Viewpoint"
+    self.pointerViewpointButton.setText(self.enablePointerViewpointButtonTextState0)
+    parametersFormLayout.addRow(self.pointerViewpointButton)
+
     # connections
-    self.referenceToTrackerSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
-    self.trackerToReferenceSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
-    self.pointerToTrackerSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
     self.pointerTipToPointerSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
-    self.needleToTrackerSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
     self.needleTipToNeedleSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForRegistration)
     self.applyTransformsForRegistrationButton.connect('clicked(bool)', self.onApplyTransformsForRegistrationClicked)
     self.patientToReferenceSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelectForNavigation)
@@ -218,6 +192,7 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     self.boneVisibilityButton.connect('clicked(bool)', self.onBoneVisibilityButtonClicked)
     self.calculateDistanceButton.connect('clicked(bool)', self.onCalculateDistanceClicked)
     self.needleViewpointButton.connect('clicked(bool)', self.onNeedleViewpointButtonClicked)
+    self.pointerViewpointButton.connect('clicked(bool)', self.onPointerViewpointButtonClicked)
     
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -256,26 +231,22 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     pass
 
   def onSelectForRegistration(self):
-    self.applyTransformsForRegistrationButton.enabled = self.referenceToTrackerSelector.currentNode() and self.trackerToReferenceSelector.currentNode() and self.pointerToTrackerSelector.currentNode() and self.pointerTipToPointerSelector.currentNode() and self.needleToTrackerSelector.currentNode() and self.needleTipToNeedleSelector.currentNode() 
+    self.applyTransformsForRegistrationButton.enabled = self.pointerTipToPointerSelector.currentNode() and self.needleTipToNeedleSelector.currentNode() 
   
   def onSelectForNavigation(self):
     self.applyTransformsForNavigationButton.enabled = True
 
   def onApplyTransformsForRegistrationClicked(self):
-    self.referenceToTrackerSelector.enabled = False
-    self.trackerToReferenceSelector.enabled = False
-    self.pointerToTrackerSelector.enabled = False
     self.pointerTipToPointerSelector.enabled = False
-    self.needleToTrackerSelector.enabled = False
     self.needleTipToNeedleSelector.enabled = False
     self.applyTransformsForRegistrationButton.enabled = False
-    self.PercutaneousNavigationLogic.buildTransformTreeForRegistration(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.trackerToReferenceSelector.currentNode(), self.pointerToTrackerSelector.currentNode(), self.pointerTipToPointerSelector.currentNode(), self.needleToTrackerSelector.currentNode(), self.needleTipToNeedleSelector.currentNode())
+    self.PercutaneousNavigationLogic.buildTransformTreeForRegistration(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.trackerToReferenceTransform, self.pointerToTrackerTransform, self.pointerTipToPointerSelector.currentNode(), self.needleToTrackerTransform, self.needleTipToNeedleSelector.currentNode())
   
   def onApplyTransformsForNavigationClicked(self):
     self.patientToReferenceSelector.enabled = False
     self.applyTransformsForNavigationButton.enabled = False
-    self.PercutaneousNavigationLogic.resetTransformTree(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.pointerToTrackerSelector.currentNode())
-    self.PercutaneousNavigationLogic.buildTransformTreeForNavigation(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.referenceToTrackerSelector.currentNode(), self.pointerToTrackerSelector.currentNode(), self.pointerTipToPointerSelector.currentNode(), self.needleToTrackerSelector.currentNode(), self.needleTipToNeedleSelector.currentNode(),self.patientToReferenceSelector.currentNode())
+    self.PercutaneousNavigationLogic.resetTransformTree(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.pointerToTrackerTransform)
+    self.PercutaneousNavigationLogic.buildTransformTreeForNavigation(self.boneModel, self.softTissueModel, self.pointerModel, self.needleModel, self.referenceToTrackerTransform, self.pointerToTrackerTransform, self.pointerTipToPointerSelector.currentNode(), self.needleToTrackerTransform, self.needleTipToNeedleSelector.currentNode(),self.patientToReferenceSelector.currentNode())
   
   def onSoftTissueVisibilityButtonClicked(self):
     if self.softTissueVisibilityButtonState == 0:
@@ -300,8 +271,8 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
   def onCalculateDistanceClicked(self):
     self.PercutaneousNavigationLogic.setOutPutDistanceLabel(self.calculateDistanceLabel)
     if self.calculateDistanceButton.checked:
-      self.PercutaneousNavigationLogic.transformTargetFiducial(self.patientToReferenceSelector.currentNode(), self.referenceToTrackerSelector.currentNode())
-      self.PercutaneousNavigationLogic.SetMembers(self.needleTipToNeedleSelector.currentNode(), self.needleToTrackerSelector.currentNode())
+      self.PercutaneousNavigationLogic.transformTargetFiducial(self.patientToReferenceSelector.currentNode(), self.referenceToTrackerTransform)
+      self.PercutaneousNavigationLogic.SetMembers(self.needleTipToNeedleSelector.currentNode(), self.needleToTrackerTransform)
       self.PercutaneousNavigationLogic.addCalculateDistanceObserver()  
     elif not self.calculateDistanceButton.checked:
       self.PercutaneousNavigationLogic.callbackObserverTag=0        
@@ -310,14 +281,29 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
 
   def onNeedleViewpointButtonClicked(self):
     if self.enableNeedleViewpointButtonState == 0:
-          self.PercutaneousNavigationLogic.SetNeedleViewpoint(self.needleModel, self.needleToTrackerSelector.currentNode())
+          self.pointerViewpointButton.enabled = False
+          self.PercutaneousNavigationLogic.SetNeedleViewpoint(self.needleModel, self.needleToTrackerTransform)
           self.PercutaneousNavigationLogic.StartViewpoint()
           self.enableNeedleViewpointButtonState = 1
           self.needleViewpointButton.setText(self.enableNeedleViewpointButtonTextState1)
     else: 
+          self.pointerViewpointButton.enabled = True
           self.PercutaneousNavigationLogic.StopViewpoint()
           self.enableNeedleViewpointButtonState = 0
           self.needleViewpointButton.setText(self.enableNeedleViewpointButtonTextState0)
+
+  def onPointerViewpointButtonClicked(self):
+    if self.enablePointerViewpointButtonState == 0:
+          self.needleViewpointButton.enabled = False
+          self.PercutaneousNavigationLogic.SetPointerViewpoint(self.pointerModel, self.pointerToTrackerTransform)
+          self.PercutaneousNavigationLogic.StartViewpoint()
+          self.enablePointerViewpointButtonState = 1
+          self.pointerViewpointButton.setText(self.enablePointerViewpointButtonTextState1)
+    else: 
+          self.needleViewpointButton.enabled = True
+          self.PercutaneousNavigationLogic.StopViewpoint()
+          self.enablePointerViewpointButtonState = 0
+          self.pointerViewpointButton.setText(self.enablePointerViewpointButtonTextState0)
 
       
 #
@@ -433,23 +419,41 @@ class PercutaneousNavigationLogic(ScriptedLoadableModuleLogic):
     if not self.needleCameraToNeedle:
       self.needleCameraToNeedle=slicer.vtkMRMLLinearTransformNode()
       self.needleCameraToNeedle.SetName("needleCameraToNeedle")
-      m = vtk.vtkMatrix4x4()
-       
-      m.SetElement( 0, 0, -0.05 ) # Row 1
-      m.SetElement( 0, 1, 0.09 )
-      m.SetElement( 0, 2, -0.99 )
-      m.SetElement( 0, 3, 60.72 )      
-      m.SetElement( 1, 0, -0.01 )  # Row 2
-      m.SetElement( 1, 1, 1 )
-      m.SetElement( 1, 2, 0.09 )
-      m.SetElement( 1, 3, 12.17 )       
-      m.SetElement( 2, 0, 1 )  # Row 3
-      m.SetElement( 2, 1, 0.01 )
-      m.SetElement( 2, 2, -0.05 )
-      m.SetElement( 2, 3, -7.26 )
-
-      self.needleCameraToNeedle.SetMatrixTransformToParent(m)
+      matrixNeedleCamera = vtk.vtkMatrix4x4()
+      matrixNeedleCamera.SetElement( 0, 0, -0.05 ) # Row 1
+      matrixNeedleCamera.SetElement( 0, 1, 0.09 )
+      matrixNeedleCamera.SetElement( 0, 2, -0.99 )
+      matrixNeedleCamera.SetElement( 0, 3, 60.72 )      
+      matrixNeedleCamera.SetElement( 1, 0, -0.01 )  # Row 2
+      matrixNeedleCamera.SetElement( 1, 1, 1 )
+      matrixNeedleCamera.SetElement( 1, 2, 0.09 )
+      matrixNeedleCamera.SetElement( 1, 3, 12.17 )       
+      matrixNeedleCamera.SetElement( 2, 0, 1 )  # Row 3
+      matrixNeedleCamera.SetElement( 2, 1, 0.01 )
+      matrixNeedleCamera.SetElement( 2, 2, -0.05 )
+      matrixNeedleCamera.SetElement( 2, 3, -7.26 )
+      self.needleCameraToNeedle.SetMatrixTransformToParent(matrixNeedleCamera)
       slicer.mrmlScene.AddNode(self.needleCameraToNeedle)
+
+    self.pointerCameraToPointer = slicer.util.getNode('pointerCameraToPointer')
+    if not self.pointerCameraToPointer:
+      self.pointerCameraToPointer=slicer.vtkMRMLLinearTransformNode()
+      self.pointerCameraToPointer.SetName("pointerCameraToPointer")
+      matrixPointerCamera = vtk.vtkMatrix4x4()
+      matrixPointerCamera.SetElement( 0, 0, -0.05 ) # Row 1
+      matrixPointerCamera.SetElement( 0, 1, 0.09 )
+      matrixPointerCamera.SetElement( 0, 2, -0.99 )
+      matrixPointerCamera.SetElement( 0, 3, 121.72 )      
+      matrixPointerCamera.SetElement( 1, 0, -0.01 )  # Row 2
+      matrixPointerCamera.SetElement( 1, 1, 1 )
+      matrixPointerCamera.SetElement( 1, 2, 0.09 )
+      matrixPointerCamera.SetElement( 1, 3, 17.17 )       
+      matrixPointerCamera.SetElement( 2, 0, 1 )  # Row 3
+      matrixPointerCamera.SetElement( 2, 1, 0.01 )
+      matrixPointerCamera.SetElement( 2, 2, -0.05 )
+      matrixPointerCamera.SetElement( 2, 3, -7.26 )
+      self.pointerCameraToPointer.SetMatrixTransformToParent(matrixPointerCamera)
+      slicer.mrmlScene.AddNode(self.pointerCameraToPointer)
 
 
   def SetNeedleViewpoint(self, NeedleModelNode, NeedleToTrackerTransformNode):
@@ -462,22 +466,24 @@ class PercutaneousNavigationLogic(ScriptedLoadableModuleLogic):
       # Viewpoint
       self.viewpointLogic.setCameraNode(SceneCameraNode)
       self.viewpointLogic.setTransformNode(self.needleCameraToNeedle)
-      # self.viewpointLogic.setModelPOVOnNode(pointerModelNode)
-      # self.viewpointLogic.setModelPOVOffNode(self.modelOnlyViewpointOffSelector.currentNode())
-      # self.viewpointLogic.setTargetModelNode(pointerModelNode)
-      # self.viewpointLogic.SetCameraXPosMm(53)
-      # self.viewpointLogic.SetCameraYPosMm(72)
-      # self.viewpointLogic.SetCameraZPosMm(119)
       self.viewpointLogic.startViewpoint()
-      # self.initViewpoint(pointerModelNode, PointerToTrackerTransformNode)
 
-      # NeedleModelNode.GetDisplayNode().SetVisibility (True);
+  def SetPointerViewpoint(self, PointerModelNode, PointerToTrackerTransformNode):
+    if PointerToTrackerTransformNode:
+      self.pointerCameraToPointer.SetAndObserveTransformNodeID(PointerToTrackerTransformNode.GetID())  
+      PointerModelNode.GetDisplayNode().SetOpacity(1)
 
+      SceneCameraNode=slicer.util.getNode('Default Scene Camera')
+      
+      # Viewpoint
+      self.viewpointLogic.setCameraNode(SceneCameraNode)
+      self.viewpointLogic.setTransformNode(self.pointerCameraToPointer)
+      self.viewpointLogic.startViewpoint()
+     
   def StartViewpoint(self):
     self.viewpointLogic.startViewpoint()
 
   def StopViewpoint(self):
-    # self.camera.SetAndObserveTransformNodeID(None)    
     self.viewpointLogic.stopViewpoint()
      
   def buildTransformTreeForRegistration(self, boneModelNode, softTissueModelNode, pointerModelNode, needleModelNode, trackerToReferenceTransformNode, pointerToTrackerTransformNode, pointerTipToPointerTransformNode, needleToTrackerTransformNode, needleTipToNeedleTransformNode):
