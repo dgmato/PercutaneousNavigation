@@ -11,13 +11,13 @@
       FilterAcWideNotch="1"
       ToolReferenceFrame="Tracker">
       <DataSources>
-        <DataSource Type="Tool" Id="Patient" PortName="0" BufferSize="500"  AveragedItemsForFiltering="20"/>
+        <DataSource Type="Tool" Id="Reference" PortName="0" BufferSize="500"  AveragedItemsForFiltering="20"/>
 		    <DataSource Type="Tool" Id="Needle" PortName="1" BufferSize="500"  AveragedItemsForFiltering="20"/>
 		    <DataSource Type="Tool" Id="Pointer" PortName="2" BufferSize="500"  AveragedItemsForFiltering="20"/>
       </DataSources>
       <OutputChannels>
         <OutputChannel Id="TrackerStream">
-          <DataSource Id="Patient" />
+          <DataSource Id="Reference" />
           <DataSource Id="Needle" />
           <DataSource Id="Pointer" />
         </OutputChannel>
@@ -36,22 +36,14 @@
         <Message Type="TRANSFORM" />
       </MessageTypes>
       <TransformNames>
-        <Transform Name="PatientToReference" />
-        <Transform Name="ReferenceToPatient" />
-		    <Transform Name="NeedleToReference" />
-		    <Transform Name="PointerToReference" />
+        <Transform Name="ReferenceToTracker" />
+        <Transform Name="TrackerToReference" />
+		    <Transform Name="NeedleToTracker" />
+		    <Transform Name="PointerToTracker" />
       </TransformNames>
       
     </DefaultClientInfo>
   </PlusOpenIGTLinkServer>
 
-  <CoordinateDefinitions>
   
-	  <Transform From="Tracker" To="Reference"
-      Matrix="
-	    1 0 0 0
-	    0 1 0 0
-	    0 0 1 0
-	    0 0 0 1" />
-  </CoordinateDefinitions> 
 </PlusConfiguration>

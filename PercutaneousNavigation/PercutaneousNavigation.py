@@ -1,4 +1,4 @@
-mport os
+import os
 import unittest
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
@@ -198,7 +198,7 @@ class PercutaneousNavigationWidget(ScriptedLoadableModuleWidget):
     self.layout.addStretch(1)
 
     # Load models
-    PercutaneousNavigationModuleDataPath = slicer.modules.PercutaneousNavigation.path.replace("PercutaneousNavigation.py","") + 'Resources/Models/'
+    PercutaneousNavigationModuleDataPath = slicer.modules.percutaneousnavigation.path.replace("PercutaneousNavigation.py","") + 'Resources/Models/'
     self.boneModel = slicer.util.getNode('BoneModel')
     if not self.boneModel:
         slicer.util.loadModel(PercutaneousNavigationModuleDataPath + 'BoneModel.stl')
